@@ -30,14 +30,19 @@ streamflow_sign_size = 18
 map_fontsize = 20
 map_fontsize_sea = 35
 
+# Define the base path for the lamah-ice dataset
+lamah_ice_base_path = Path(r"C:\Users\hordurbhe\Documents\Vinna\lamah\lamah_ice\lamah_ice")
+
 # Read the gauges shapefile that contains the indices and V numbers
-gauges_gdf = gpd.read_file(Path(r"C:\Users\hordurbhe\Documents\Vinna\lamah\lamah_ice\lamah_ice\D_gauges\3_shapefiles\gauges.shp"))
+gauges_shapefile = lamah_ice_base_path / "D_gauges/3_shapefiles/gauges.shp"
+gauges_gdf = gpd.read_file(gauges_shapefile)
 gauges_gdf = gauges_gdf.set_index('id')
 gauges_gdf = gauges_gdf.set_crs('epsg:3057')
 gauges = gauges_gdf.copy()
 
 # Read the catchment characteristics - Extract area_calc and human influence
-catchments_chara = pds.read_csv(Path(r'C:\Users\hordurbhe\Documents\Vinna\lamah\lamah_ice\lamah_ice\A_basins_total_upstrm\1_attributes\Catchment_attributes.csv'),sep=';')
+catchment_attributes_file = lamah_ice_base_path / "A_basins_total_upstrm/1_attributes/Catchment_attributes.csv"
+catchments_chara = pds.read_csv(catchment_attributes_file, sep=';')
 catchments_chara = catchments_chara.set_index('id')
 
 # Read the catchment characteristics - Extract area_calc and human influence
@@ -45,7 +50,8 @@ hydro_sign = pds.read_csv(Path(r'C:\Users\hordurbhe\Documents\Vinna\lamah\lamah_
 hydro_sign = hydro_sign.set_index('id')
 
 # Read catchments
-catchments = gpd.read_file(Path(r"C:/Users/hordurbhe/Documents/Vinna/lamah/lamah_ice/lamah_ice/A_basins_total_upstrm/3_shapefiles/Basins_A.shp"))
+catchments_shapefile = lamah_ice_base_path / "A_basins_total_upstrm/3_shapefiles/Basins_A.shp"
+catchments = gpd.read_file(catchments_shapefile)
 catchments = catchments.set_index('id')
 catchments = catchments.set_crs('epsg:3057')
 
