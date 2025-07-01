@@ -1,0 +1,17 @@
+name: iceland-hydro-trends
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - numpy
+  - pandas
+  - geopandas
+  - matplotlib
+  - scipy
+  - statsmodels
+  - pathlib
+  - seaborn
+  - pip
+  - pip:
+    - pymannkendall  # This package is not available in conda, so we install it via pip 
