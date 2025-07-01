@@ -59,9 +59,12 @@ Then run the desired analysis scripts:
 |--------|-------------|
 | `pre_process_streamflow_measurements_from_LamaH_Ice.py` | Pre-processes daily streamflow measurements |
 | `main.py` | Calculates trends in annual and seasonal average streamflow, coefficient of variation (CV), flashiness index, baseflow index, and more |
+| `Figure8_visualize_trend_summary_with_heatmap.py` | Code to generate Figure 8: A heatmap to summarize trend results |
 | `trend_correlation_analysis.py` | Correlates streamflow trends with catchment attributes and meteorological trends |
+| `visualize_trend_correlations.py` | Creates correlation heatmaps for trend correlation results |
 | `calculate_trends_in_streamflow_timing_metrics.py` | Computes trends in streamflow timing metrics (e.g., center of mass, timing of high/low flows) |
 | `timing_metric_trend_correlation_analysis.py` | Analyzes relationships between timing trends and climate drivers or catchment features |
+| `visualize_timing_trends_with_heatmap.py` | Creates heatmaps to summarize timing trends results |
 
 ---
 
