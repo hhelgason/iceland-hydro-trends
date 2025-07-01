@@ -42,6 +42,7 @@ Edit the `config.py` file in the `src/` directory to set:
 
 - The path to the extracted **LamaH-Ice dataset**
 - The output directory for results and figures
+- Specify START_YEAR and END_YEAR. If reproducing results from the paper, first run the main.py (described below) using START_YEAR = 1973 and then using START_YEAR = 1993.
 
 ---
 
@@ -58,7 +59,7 @@ Then run the desired analysis scripts:
 | Script | Description |
 |--------|-------------|
 | `pre_process_streamflow_measurements_from_LamaH_Ice.py` | Pre-processes daily streamflow measurements |
-| `main.py` | Calculates trends in annual and seasonal average streamflow, coefficient of variation (CV), flashiness index, baseflow index, and more |
+| `main.py` | Calculates trends in annual and seasonal average streamflow, coefficient of variation (CV), flashiness index, baseflow index, and more. This script needs to be run twice, using START_YEAR = 1973 and then using START_YEAR = 1993 (specified in config.py)  |
 | `Figure8_visualize_trend_summary_with_heatmap.py` | Code to generate Figure 8: A heatmap to summarize trend results |
 | `trend_correlation_analysis.py` | Correlates streamflow trends with catchment attributes and meteorological trends |
 | `visualize_trend_correlations.py` | Creates correlation heatmaps for trend correlation results |
