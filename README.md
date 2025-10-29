@@ -58,6 +58,11 @@ Then run the desired analysis scripts:
 
 | Script | Description |
 |--------|-------------|
+First run code to plot figures 2 and 3 in the manuscript (note that figure 1 is plotted with a notebook in the notebooks folder):
+| `calculate_annual_and_seasonal_averages_for_longterm_analysis.py` | Calculate long-term means for streamflow measurements |
+| `plot_Figure2_raster_anomalies.py` | Plots figure 2 |
+| `calculate_AO_NAO_correlations_and_plot_figure_3.py` | Plots figure 3 |
+Now run code that is used for the trend analysis
 | `pre_process_streamflow_measurements_from_LamaH_Ice.py` | Pre-processes daily streamflow measurements |
 | `main.py` | Calculates trends in annual and seasonal average streamflow, coefficient of variation (CV), flashiness index, baseflow index, and more. This script needs to be run twice, using START_YEAR = 1973 and then using START_YEAR = 1993 (specified in config.py)  |
 | `Figure8_visualize_trend_summary_with_heatmap.py` | Code to generate Figure 8: A heatmap to summarize trend results |
@@ -71,7 +76,7 @@ Then run the desired analysis scripts:
 
 ## Notebooks
 
-The `notebooks/` folder contains Jupyter notebooks used to generate figures for the manuscript. These are primarily for visualization and post-processing. Core computations are handled in the scripts listed above.
+The `notebooks/` folder contains Jupyter notebooks used to generate the rest of the figures for the manuscript. These are primarily for visualization and post-processing. Core computations are handled in the scripts listed above.
 
 ---
 
