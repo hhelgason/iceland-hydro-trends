@@ -34,7 +34,7 @@ rcParams['font.size'] = 10
 # Thresholds (same as trend_analysis.py)
 WITHIN_YEAR_COVERAGE_THRESHOLD = 0.9  # 90% of daily data required per water year
 MIN_YEARS = 30  # Minimum number of valid water years required
-START_YEAR_THRESHOLD = 1980  # Gauges must start on or before this year
+START_YEAR_THRESHOLD = 1993  # Gauges must start on or before this year
 
 def get_water_year_index(df):
     """
