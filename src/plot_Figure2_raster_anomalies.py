@@ -37,7 +37,15 @@ if '9' in df_streamflow_all_adj_ann.columns:
     df_streamflow_all_adj_ann = df_streamflow_all_adj_ann.drop(columns='9')
     print("Dropped gauge 9 (Syðri-Bægisá) due to inhomogeneity")
 else:
-    print("Gauge 9 not found in dataset (may have been filtered out earlier)") 
+    print("Gauge 9 not found in dataset (may have been filtered out earlier)")
+
+# Drop gauge 43 (Jökulsá á Dal) due to gauge relocation in 2007 changing catchment area
+# from 1964 km2 to 1662 km2, which creates an artificial reduction in the anomaly plot
+if '43' in df_streamflow_all_adj_ann.columns:
+    df_streamflow_all_adj_ann = df_streamflow_all_adj_ann.drop(columns='43')
+    print("Dropped gauge 43 (Jökulsá á Dal) due to gauge relocation in 2007")
+else:
+    print("Gauge 43 not found in dataset (may have been filtered out earlier)")
 
 # Define the fixed reference period for computing the mean
 reference_period = ('2000-10-01', '2010-09-30')
@@ -166,11 +174,11 @@ plt.title('Annual streamflow anomalies by watershed across Iceland', fontsize=ti
 ax.set_xlabel('Water year', fontsize=fontsize)
 
 # Save the figure as PDF (with _longterm suffix to avoid overwriting)
-pdf_save_path = os.path.join(save_path, 'Figure2_streamflow_anomalies_longterm.pdf')
+pdf_save_path = os.path.join(save_path, 'Figure2_streamflow_anomalies_longterm_.pdf')
 plt.savefig(pdf_save_path, dpi=300, format='pdf', bbox_inches='tight')
 
 # Save the figure as PNG (with _longterm suffix to avoid overwriting)
-png_save_path = os.path.join(save_path, 'Figure2_streamflow_anomalies_longterm.png')
+png_save_path = os.path.join(save_path, 'Figure2_streamflow_anomalies_longterm_.png')
 plt.savefig(png_save_path, dpi=300, format='png', bbox_inches='tight')
 
 # Display the plot
