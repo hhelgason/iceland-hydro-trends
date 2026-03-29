@@ -149,19 +149,21 @@ def create_folders(base_folder, start_year, end_year):
     sequences_path = annual_trends_path / 'sequences'
     baseflow_index_path = annual_trends_path / 'baseflow_index'
     baseflow_series_path = annual_trends_path / 'baseflow_series'
+    low_flow_path = annual_trends_path / 'low_flow'
+    high_flow_path = annual_trends_path / 'high_flow'
     
     # Create all directories
     for folder_path in [base_path, daily_timeseries_path, annual_autocorrelation_path, maps_path, 
                        raster_trends_path, seasonal_trends_path_mod_ts, annual_trends_path, 
                        monthly_trends_path_mod_ts, annual_mean_flow_path, annual_cv_path, 
                        annual_std_path, flashiness_path, sequences_path, baseflow_index_path, 
-                       baseflow_series_path]:
+                       baseflow_series_path, low_flow_path, high_flow_path]:
         folder_path.mkdir(parents=True, exist_ok=True)
     
     return (daily_timeseries_path, annual_autocorrelation_path, maps_path, raster_trends_path, 
             seasonal_trends_path_mod_ts, annual_trends_path, monthly_trends_path_mod_ts,
             annual_mean_flow_path, annual_cv_path, annual_std_path, flashiness_path, 
-            sequences_path, baseflow_index_path, baseflow_series_path)
+            sequences_path, baseflow_index_path, baseflow_series_path, low_flow_path, high_flow_path)
 
 def setup_plot(ax, title, xlim, ylim, xticks, yticks, frame_on):
     """
@@ -201,11 +203,40 @@ def add_colorbar(fig, ax, colormap, vmin, vmax, label, extend):
     """
     sm = plt.cm.ScalarMappable(cmap=colormap, norm=Normalize(vmin=vmin, vmax=vmax))
     sm.set_array([])
-    cax = fig.add_axes([0.25, 0.07, 0.6, 0.03])
+    cax = fig.add_axes([0.22, 0.07, 0.6, 0.03])
     cb = ColorbarBase(cax, cmap=colormap, norm=Normalize(vmin=vmin, vmax=vmax), 
                      orientation='horizontal', extend=extend)
     cb.set_label(label, size=20)
     cb.ax.tick_params(labelsize=20)
+    return cb
+
+def add_colorbar_seasonal(fig, ax, colormap, vmin, vmax, label, extend):
+    """
+    Add a colorbar to seasonal plots with larger font sizes to match annual plot
+    when resized to similar dimensions.
+    
+    The seasonal plot is figsize=(15, 12) vs annual figsize=(8, 6), so fonts need
+    to be scaled up by ~1.875x to appear the same size when resized.
+    
+    Args:
+        fig (matplotlib.figure.Figure): Figure to add colorbar to
+        ax (matplotlib.axes.Axes): Axes the colorbar relates to
+        colormap (str or matplotlib.colors.Colormap): Colormap to use
+        vmin (float): Minimum value for colorbar scale
+        vmax (float): Maximum value for colorbar scale
+        label (str): Colorbar label
+        extend (str): How to extend the colorbar ('both', 'min', 'max', or 'neither')
+    
+    Returns:
+        matplotlib.colorbar.Colorbar: The created colorbar
+    """
+    sm = plt.cm.ScalarMappable(cmap=colormap, norm=Normalize(vmin=vmin, vmax=vmax))
+    sm.set_array([])
+    cax = fig.add_axes([0.21, 0.07, 0.6, 0.03])
+    cb = ColorbarBase(cax, cmap=colormap, norm=Normalize(vmin=vmin, vmax=vmax), 
+                     orientation='horizontal', extend=extend)
+    cb.set_label(label, size=38)
+    cb.ax.tick_params(labelsize=38)
     return cb
 
 def plot_map(ax, bmap, glaciers, iceland_shapefile_color, glaciers_color, xlim, ylim):
@@ -274,6 +305,16 @@ def plot_maps(catchments, which_plots, merged_gdf, start_year, end_year, results
     natural_mask = merged_gdf['degimpact'] != 's'  # 's' indicates strong anthropogenic influence
     merged_gdf_natural = merged_gdf.loc[natural_mask]
 
+    # Determine panel labels based on period (start_year)
+    # Period 1 (1973-2023): a) annual, b) seasonal
+    # Period 2 (1993-2023): c) annual, d) seasonal
+    if start_year == 1973:
+        annual_panel_label = 'a)'
+        seasonal_panel_label = 'b)'
+    else:
+        annual_panel_label = 'c)'
+        seasonal_panel_label = 'd)'
+
     if which_plots['annual_map']:
         print("Plotting annual map...")
         fig, ax = plt.subplots(figsize=(8, 6))
@@ -286,9 +327,16 @@ def plot_maps(catchments, which_plots, merged_gdf, start_year, end_year, results
         significant_points = merged_gdf[merged_gdf['pval'] < 0.05]
         ax.plot(significant_points.geometry.x - 100, significant_points.geometry.y, marker='o', markersize=18, markerfacecolor='none', markeredgecolor='k', linestyle='none', lw='0.5')
         catchments.loc[merged_gdf['annual_avg_flow_trend_per_decade'].dropna().index].plot(facecolor='none', edgecolor='black', ax=ax, zorder=3, lw=0.25)
+        ax.set_title('Annual streamflow', y=0.9, fontsize=20, 
+                     bbox=dict(boxstyle='square,pad=0.1', facecolor='white', edgecolor='none'))
+        # Add panel label in top left corner
+        ax.text(0.02, 0.98, annual_panel_label, transform=ax.transAxes, fontsize=20, 
+                fontweight='bold', va='top', ha='left')
         add_colorbar(fig, ax, colormap, annual_vmin, annual_vmax, 'Trend in streamflow from %s-%s (%%/decade)' % (start_year, end_year), extend)
         save_path = os.path.join(maps_path, 'annual_trend.png')
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        save_path_pdf = os.path.join(maps_path, 'annual_trend.pdf')
+        plt.savefig(save_path_pdf, dpi=300, bbox_inches='tight')
         plt.close()
 
     if which_plots['seasonal_map']:
@@ -307,15 +355,20 @@ def plot_maps(catchments, which_plots, merged_gdf, start_year, end_year, results
             ax.plot(significant_points.geometry.x - 100, significant_points.geometry.y, marker='o', markersize=18, markerfacecolor='none', markeredgecolor='k', linestyle='none', lw='0.5')
             catchments.loc[merged_gdf_natural[col].dropna().index].plot(facecolor='none', edgecolor='black', ax=ax, zorder=3, lw=0.25)
             ax.set_title(['Dec-Feb', 'Mar-May', 'Jun-Aug', 'Sep-Nov'][i], y=0.9, fontsize=35)
-        add_colorbar(fig, axs[1, 1], colormap, vmin, vmax, 'Trend in streamflow from %s-%s (%%/decade)' % (start_year, end_year), extend)
+        # Add panel label to top-left subplot (Dec-Feb)
+        axs[0, 0].text(0.02, 0.98, seasonal_panel_label, transform=axs[0, 0].transAxes, fontsize=38, 
+                       fontweight='bold', va='top', ha='left')
+        add_colorbar_seasonal(fig, axs[1, 1], colormap, vmin, vmax, 'Trend in streamflow from %s-%s (%%/decade)' % (start_year, end_year), extend)
         save_path = os.path.join(maps_path, 'seasonal_trend_ts_mod.png')
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        save_path_pdf = os.path.join(maps_path, 'seasonal_trend_ts_mod.pdf')
+        plt.savefig(save_path_pdf, dpi=300, bbox_inches='tight')
         plt.close()    
 
     if which_plots['low_high_flow_map']:
         print("Plotting low/high flow maps...")
         # Drop Fellsá and Eyjabakkafoss (15, 48)
-        merged_gdf_filtered = merged_gdf_natural.drop([15, 48], errors='ignore')
+        merged_gdf_filtered = merged_gdf_natural.drop([15], errors='ignore')
         
         # Plot low flow map
         fig, ax = plt.subplots(figsize=(8, 6))
@@ -627,7 +680,7 @@ def plot_maps(catchments, which_plots, merged_gdf, start_year, end_year, results
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
 
-def plot_timeseries(catchments, which_plots, merged_gdf, start_year, end_year, results, valid_data_dict, invalid_data_dict, daily_timeseries_path, annual_trends_path, seasonal_trends_path_mod_ts, monthly_trends_path_mod_ts, annual_mean_flow_path, annual_cv_path, annual_std_path, flashiness_path, sequences_path, baseflow_index_path):
+def plot_timeseries(catchments, which_plots, merged_gdf, start_year, end_year, results, valid_data_dict, invalid_data_dict, daily_timeseries_path, annual_trends_path, seasonal_trends_path_mod_ts, monthly_trends_path_mod_ts, annual_mean_flow_path, annual_cv_path, annual_std_path, flashiness_path, sequences_path, baseflow_index_path, low_flow_path=None, high_flow_path=None):
     """
     Plot time series figures for all gauges and metrics.
 
@@ -757,6 +810,96 @@ def plot_timeseries(catchments, which_plots, merged_gdf, start_year, end_year, r
             plt.tight_layout()
             save_path = os.path.join(sequences_path, f'{gauge}_sequences.png')
             plt.savefig(save_path)
+            plt.close()
+
+        # Low flow series (10th percentile)
+        if which_plots.get('low_flow_series', False) and low_flow_path is not None:
+            fig = plt.figure(figsize=(10, 6))
+            plt.suptitle(f'Annual Low Flow (Q10) - Gauge {gauge}, {merged_gdf.loc[gauge]["river"]} {merged_gdf.loc[gauge]["name"]}')
+            valid_data = valid_data_dict.get((str(gauge), 'low_flow'))
+            
+            if valid_data is not None and len(valid_data) > 0:
+                plt.scatter(valid_data.index, valid_data.values, label=None)
+                # Handle both datetime and integer indices
+                if isinstance(valid_data.index, pd.DatetimeIndex):
+                    years = valid_data.index.year
+                else:
+                    years = valid_data.index
+                trend = results.loc[gauge]['low_flow_trend']
+                intercept = results.loc[gauge]['low_flow_intercept']
+                pval = results.loc[gauge]['low_flow_pval']
+                trend_per_decade = results.loc[gauge]['low_flow_trend_per_decade']
+                
+                if not pd.isna(trend) and not pd.isna(intercept):
+                    trendline = intercept + trend * (years - years[0])
+                    if pval < 0.05:
+                        plt.plot(valid_data.index, trendline, ls='-', c='r',
+                                label=f'{trend_per_decade:.1f} %/decade, p = {pval:.3f}')
+                    else:
+                        plt.plot(valid_data.index, trendline, ls='--', c='r',
+                                label=f'{trend_per_decade:.1f} %/decade, p = {pval:.3f}')
+            else:
+                invalid_data = invalid_data_dict.get((str(gauge), 'low_flow'))
+                if invalid_data is not None and len(invalid_data) > 0:
+                    plt.scatter(invalid_data.index, invalid_data.values, color='lightblue', 
+                               label='Trend not calculated due to missing data')
+                else:
+                    plt.text(0.5, 0.5, 'No valid data available', horizontalalignment='center', 
+                            transform=plt.gca().transAxes)
+            
+            plt.xlabel('Year')
+            plt.ylabel('Low flow (m³/s)')
+            handles, labels = plt.gca().get_legend_handles_labels()
+            if labels:
+                plt.legend()
+            plt.tight_layout()
+            save_name = f'{gauge}_low_flow.png'
+            plt.savefig(os.path.join(low_flow_path, save_name))
+            plt.close()
+
+        # High flow series (90th percentile)
+        if which_plots.get('high_flow_series', False) and high_flow_path is not None:
+            fig = plt.figure(figsize=(10, 6))
+            plt.suptitle(f'Annual High Flow (Q90) - Gauge {gauge}, {merged_gdf.loc[gauge]["river"]} {merged_gdf.loc[gauge]["name"]}')
+            valid_data = valid_data_dict.get((str(gauge), 'high_flow'))
+            
+            if valid_data is not None and len(valid_data) > 0:
+                plt.scatter(valid_data.index, valid_data.values, label=None)
+                # Handle both datetime and integer indices
+                if isinstance(valid_data.index, pd.DatetimeIndex):
+                    years = valid_data.index.year
+                else:
+                    years = valid_data.index
+                trend = results.loc[gauge]['high_flow_trend']
+                intercept = results.loc[gauge]['high_flow_intercept']
+                pval = results.loc[gauge]['high_flow_pval']
+                trend_per_decade = results.loc[gauge]['high_flow_trend_per_decade']
+                
+                if not pd.isna(trend) and not pd.isna(intercept):
+                    trendline = intercept + trend * (years - years[0])
+                    if pval < 0.05:
+                        plt.plot(valid_data.index, trendline, ls='-', c='r',
+                                label=f'{trend_per_decade:.1f} %/decade, p = {pval:.3f}')
+                    else:
+                        plt.plot(valid_data.index, trendline, ls='--', c='r',
+                                label=f'{trend_per_decade:.1f} %/decade, p = {pval:.3f}')
+            else:
+                invalid_data = invalid_data_dict.get((str(gauge), 'high_flow'))
+                if invalid_data is not None and len(invalid_data) > 0:
+                    plt.scatter(invalid_data.index, invalid_data.values, color='lightblue', 
+                               label='Trend not calculated due to missing data')
+                else:
+                    plt.text(0.5, 0.5, 'No valid data available', horizontalalignment='center', 
+                            transform=plt.gca().transAxes)
+            
+            plt.xlabel('Year')
+            plt.ylabel('High flow (m³/s)')
+            handles, labels = plt.gca().get_legend_handles_labels()
+            if labels:
+                plt.legend()
+            plt.tight_layout()
+            save_name = f'{gauge}_high_flow.png'
+            plt.savefig(os.path.join(high_flow_path, save_name))
             plt.close()
 
         if which_plots.get('seasonal_series', False):
@@ -1202,7 +1345,7 @@ def plot_all_timing_series(timing_data, timing_results, df_raw, df_filled, outpu
                     dpi=300, bbox_inches='tight')
         plt.close()
 
-def plot_trendfigs(catchments, which_plots, merged_gdf, start_year, end_year, results, valid_data_dict, invalid_data_dict, daily_timeseries_path, annual_autocorrelation_path, maps_path, raster_trends_path, seasonal_trends_path_mod_ts, annual_trends_path, monthly_trends_path_mod_ts, annual_mean_flow_path, annual_cv_path, annual_std_path, flashiness_path, sequences_path, baseflow_index_path):
+def plot_trendfigs(catchments, which_plots, merged_gdf, start_year, end_year, results, valid_data_dict, invalid_data_dict, daily_timeseries_path, annual_autocorrelation_path, maps_path, raster_trends_path, seasonal_trends_path_mod_ts, annual_trends_path, monthly_trends_path_mod_ts, annual_mean_flow_path, annual_cv_path, annual_std_path, flashiness_path, sequences_path, baseflow_index_path, low_flow_path=None, high_flow_path=None):
     """
     Main plotting function that delegates to specific plotting functions based on configuration.
 
@@ -1282,7 +1425,8 @@ def plot_trendfigs(catchments, which_plots, merged_gdf, start_year, end_year, re
                            valid_data_dict, invalid_data_dict, daily_timeseries_path,
                            annual_trends_path, seasonal_trends_path_mod_ts,
                            monthly_trends_path_mod_ts, annual_mean_flow_path, annual_cv_path, 
-                           annual_std_path, flashiness_path, sequences_path, baseflow_index_path)
+                           annual_std_path, flashiness_path, sequences_path, baseflow_index_path,
+                           low_flow_path, high_flow_path)
         except Exception as e:
             import traceback
             print(f"Warning: Error while plotting timeseries: {str(e)}")

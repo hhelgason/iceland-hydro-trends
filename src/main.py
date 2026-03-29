@@ -82,7 +82,7 @@ print("Creating output directories...")
 daily_timeseries_path, annual_autocorrelation_path, maps_path, raster_trends_path, \
 seasonal_trends_path_mod_ts, annual_trends_path, monthly_trends_path_mod_ts, \
 annual_mean_flow_path, annual_cv_path, annual_std_path, flashiness_path, sequences_path, \
-baseflow_index_path, baseflow_series_path = plotting.create_folders(OUTPUT_DIR, START_YEAR, END_YEAR)
+baseflow_index_path, baseflow_series_path, low_flow_path, high_flow_path = plotting.create_folders(OUTPUT_DIR, START_YEAR, END_YEAR)
 
 # Check if trend results already exist and load them if they do
 if (os.path.exists(results_file) and 
@@ -142,22 +142,22 @@ which_plots = {
     
     # Time series plots
     'annual_series': True,          # Annual mean flow time series
-    'annual_std_series': True,      # Annual standard deviation time series
-    'annual_cv_series': True,       # Annual CV time series
-    'flashiness_series': True,      # Flashiness index time series
-    'rising_falling_series': True,  # Rising/falling sequences time series
-    'baseflow_index_series': True,   # Baseflow index time series
+    'annual_std_series': False,      # Annual standard deviation time series
+    'annual_cv_series': False,       # Annual CV time series
+    'flashiness_series': False,      # Flashiness index time series
+    'rising_falling_series': False,  # Rising/falling sequences time series
+    'baseflow_index_series': False,   # Baseflow index time series
     'low_flow_series': True,        # Low flow time series
     'high_flow_series': True,       # High flow time series
     
     # Seasonal and monthly time series
     'seasonal_series': True,        # Seasonal mean flow time series
-    'seasonal_std_series': True,    # Seasonal standard deviation time series
-    'seasonal_cv_series': True,     # Seasonal CV time series
-    'seasonal_flashiness_series': True,  # Seasonal flashiness time series
-    'seasonal_baseflow_index_series': True,  # Seasonal baseflow index time series
-    'seasonal_rising_falling_series': True,  # Seasonal rising/falling sequences
-    'seasonal_low_high_flow_series': True,   # Seasonal low/high flow time series
+    'seasonal_std_series': False,    # Seasonal standard deviation time series
+    'seasonal_cv_series': False,     # Seasonal CV time series
+    'seasonal_flashiness_series': False,  # Seasonal flashiness time series
+    'seasonal_baseflow_index_series': False,  # Seasonal baseflow index time series
+    'seasonal_rising_falling_series': False,  # Seasonal rising/falling sequences
+    'seasonal_low_high_flow_series': False,   # Seasonal low/high flow time series
     
     # Additional analyses
     'autocorrelation': False,        # Autocorrelation analysis
@@ -170,7 +170,8 @@ plotting.plot_trendfigs(
     catchments, which_plots, merged_gdf, START_YEAR, END_YEAR, results,
     valid_data_dict, invalid_data_dict, daily_timeseries_path, annual_autocorrelation_path, maps_path,
     raster_trends_path, seasonal_trends_path_mod_ts, annual_trends_path, monthly_trends_path_mod_ts, 
-    annual_mean_flow_path, annual_cv_path, annual_std_path, flashiness_path, sequences_path, baseflow_index_path
+    annual_mean_flow_path, annual_cv_path, annual_std_path, flashiness_path, sequences_path, baseflow_index_path,
+    low_flow_path, high_flow_path
 )
 
 print("Analysis complete!")
