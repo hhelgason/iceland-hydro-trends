@@ -2,8 +2,8 @@
 
 This repository contains the code used for the paper:
 
-**"Understanding Changes in Iceland’s Streamflow Dynamics in Response to Climate Change"**  
-*Submitted to Hydrology and Earth System Sciences, 2024.*
+**"Understanding changes in Iceland’s streamflow dynamics in response to climate change"**  
+*Published in Hydrology and Earth System Sciences, 2026.*
 
 ---
 
@@ -61,17 +61,21 @@ Then run the desired analysis scripts:
 First run code to plot figures 2 and 3 in the manuscript (note that figure 1 is plotted with a notebook in the notebooks folder):
 | `calculate_annual_and_seasonal_averages_for_longterm_analysis.py` | Calculate long-term means for streamflow measurements |
 | `plot_Figure2_raster_anomalies.py` | Plots figure 2 |
-| `calculate_AO_NAO_correlations_and_plot_figure_3.py` | Plots figure 3 |
+| `calculate_climate_indices_correlation_with_streamflow.py` | Prepares data for figure 3 |
+| `plot_climate_indices_correlation_analysis_AO_NAO.py` | Plots figure 3 |
 Now run code that is used for the trend analysis
 | `pre_process_streamflow_measurements_from_LamaH_Ice.py` | Pre-processes daily streamflow measurements |
 | `main.py` | Calculates trends in annual and seasonal average streamflow, coefficient of variation (CV), flashiness index, baseflow index, and more. This script needs to be run twice, using START_YEAR = 1973 and then using START_YEAR = 1993 (specified in config.py)  |
+| `plot_annual_meteorological_trends_figure.py` | Plots trends in annual meteorological variables (Figure 4)  |
+| `plot_seasonal_meteorological_trends_2periods.py` | Plots trends in seasonal meteorological variables (Figure 5) |
+| `plot_lowhigh_flows_2x2.py` | Plots trends in high and low flows (Figure 10) |
 | `Figure8_visualize_trend_summary_with_heatmap.py` | Code to generate Figure 8: A heatmap to summarize trend results |
 | `trend_correlation_analysis.py` | Correlates streamflow trends with catchment attributes and meteorological trends |
 | `visualize_trend_correlations.py` | Creates correlation heatmaps for trend correlation results |
 | `calculate_trends_in_streamflow_timing_metrics.py` | Computes trends in streamflow timing metrics (e.g., center of mass, timing of high/low flows) |
 | `timing_metric_trend_correlation_analysis.py` | Analyzes relationships between timing trends and climate drivers or catchment features |
 | `visualize_timing_trends_with_heatmap.py` | Creates heatmaps to summarize timing trends results |
-
+| `create_manuscript_tables.py` | Creates tables used in the manuscript/supplement |
 ---
 
 ## Notebooks
