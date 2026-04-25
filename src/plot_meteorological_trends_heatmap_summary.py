@@ -37,6 +37,15 @@ VARIABLE_LABELS = {
     "rainfall": "Rainfall",
 }
 
+# Manuscript subfigure order (a–j) and short names for panel titles: "Trends in …"
+MET_HEATMAP_PANELS: list[tuple[str, str, tuple[str, str]]] = [
+    ("2m_temp_mean", "temperature", ("a", "b")),
+    ("prec", "precipitation", ("c", "d")),
+    ("rainfall", "rainfall", ("e", "f")),
+    ("snowfall", "snowfall", ("g", "h")),
+    ("total_et", "evapotranspiration", ("i", "j")),
+]
+
 
 def _attach_g_frac(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     c = gpd.read_file(CATCHMENT_ATTRIBUTES_FILE)
@@ -74,7 +83,8 @@ def main(
     rcParams["font.family"] = "Arial"
     rcParams["font.size"] = 20
 
-    for var, label in VARIABLE_LABELS.items():
+    for var, title_entity, letters in MET_HEATMAP_PANELS:
+        label = VARIABLE_LABELS[var]
         k73 = f"{var}_1973-2023"
         k93 = f"{var}_1993-2023"
         if k73 not in merged_1973 or k93 not in merged_1993:
@@ -83,7 +93,15 @@ def main(
         df73 = _attach_g_frac(merged_1973[k73])
         df93 = _attach_g_frac(merged_1993[k93])
         print(f"Heatmap: {label} ...")
-        plot_trend_heatmaps(df73, df93, MET_COLUMNS, label, str(out))
+        plot_trend_heatmaps(
+            df73,
+            df93,
+            MET_COLUMNS,
+            label,
+            str(out),
+            panel_letters=letters,
+            title_entity=title_entity,
+        )
 
     print(f"Done. Figures in: {out}")
 

@@ -15,7 +15,7 @@ import os
 sns.set()
 from matplotlib import rcParams
 rcParams['font.family'] = 'Arial'
-from config import LAMAH_ICE_BASE_PATH, ICELAND_SHAPEFILE, GLACIER_SHAPEFILE
+from config import LAMAH_ICE_BASE_PATH, ICELAND_SHAPEFILE, GLACIER_SHAPEFILE, MANUSCRIPT_FIGURES_PATH
 
 # Define functions used for plotting:
 def plot_figs(basemap,glaciers,ax,iceland_shapefile_color,glaciers_color):
@@ -87,7 +87,8 @@ merged_gdf = gauges_gdf.merge(df_corr_ao_nao, left_index=True, right_index=True)
 
 start_year = 1950
 end_year = 2024
-maps_path = Path(r"C:\Users\hordurbhe\OneDrive - Landsvirkjun\Changes in streamflow in Iceland\paper\Figures_Final")
+maps_path = MANUSCRIPT_FIGURES_PATH
+maps_path.mkdir(parents=True, exist_ok=True)
 # Common settings for size and markers
 global_marker_size = 200  # Marker size for points
 global_marker_significant_size = 20  # Marker size for significant points

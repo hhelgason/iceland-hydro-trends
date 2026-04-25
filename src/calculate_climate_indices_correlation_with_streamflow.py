@@ -149,7 +149,7 @@ def read_ao_nao_index(url):
         Monthly index values with DatetimeIndex
     """
     print(f"Reading index from: {url}")
-    df_index = pd.read_csv(url, delim_whitespace=True, header=None, names=['Year', 'Month', 'Value'])
+    df_index = pd.read_csv(url, sep=r"\s+", engine="python", header=None, names=['Year', 'Month', 'Value'])
     df_index['date'] = pd.to_datetime(df_index[['Year', 'Month']].assign(DAY=1))
     df_index.set_index('date', inplace=True)
     df_index.drop(columns=['Year', 'Month'], inplace=True)

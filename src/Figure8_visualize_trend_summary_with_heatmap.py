@@ -12,6 +12,17 @@ from config import (
     GAUGES_TO_KEEP
 )
 
+
+def _win_long_path_file(path: str) -> str:
+    """Normalize a file path for writing on Windows so paths can exceed the MAX_PATH (260) limit."""
+    if os.name != "nt" or path.startswith("\\\\?\\"):
+        return path
+    p = os.path.normpath(path)
+    if p.startswith("\\\\") and not p.startswith("\\\\?\\"):
+        return "\\\\?\\UNC\\" + p[2:]
+    return "\\\\?\\" + p
+
+
 def generate_heatmap_row(df, trend_col, pval_col, glaciation_threshold=0.05):
     """Generate heatmap data for a single row."""
     # General counts
@@ -82,8 +93,24 @@ def generate_annual_flow_heatmap_data(df_annual, df_seasonal, columns, glaciatio
     index_labels = [label for _, _, label in columns]
     return pd.DataFrame(heatmap_data, index=index_labels), pd.DataFrame(annotations, index=index_labels)
 
-def plot_trend_heatmaps(df_1973, df_1993, columns, metric_name, savepath):
-    """Plot heatmaps for a specific metric."""
+def plot_trend_heatmaps(
+    df_1973,
+    df_1993,
+    columns,
+    metric_name,
+    savepath,
+    *,
+    panel_letters: tuple[str, str] = ("a", "b"),
+    title_entity: str | None = None,
+):
+    """Plot heatmaps for a specific metric.
+
+    ``metric_name`` is used in output filenames. If ``title_entity`` is set, it is
+    used in the subplot titles (e.g. "temperature"); otherwise ``metric_name`` is used.
+    ``panel_letters`` are the two subfigure labels (default ``a, b``).
+    """
+    title_word = title_entity if title_entity is not None else metric_name
+    os.makedirs(savepath, exist_ok=True)
     # Generate heatmap data and annotations
     df_1973_heatmap, annotations_1973 = generate_heatmap_data_with_glaciation(df_1973, columns)
     df_1993_heatmap, annotations_1993 = generate_heatmap_data_with_glaciation(df_1993, columns)
@@ -98,7 +125,9 @@ def plot_trend_heatmaps(df_1973, df_1993, columns, metric_name, savepath):
                 cmap='Blues', 
                 ax=axes[0], 
                 cbar_kws={'label': 'Number of cases'})
-    axes[0].set_title(f'a) Trends in {metric_name}, 1973-2023', fontsize=22)
+    axes[0].set_title(
+        f'{panel_letters[0]}) Trends in {title_word}, 1973-2023', fontsize=22
+    )
     axes[0].set_xticklabels(axes[0].get_xticklabels(), rotation=45, ha='right')
 
     # Plot second heatmap (1993-2023)
@@ -108,15 +137,23 @@ def plot_trend_heatmaps(df_1973, df_1993, columns, metric_name, savepath):
                 cmap='Greens', 
                 ax=axes[1], 
                 cbar_kws={'label': 'Number of cases'})
-    axes[1].set_title(f'b) Trends in {metric_name}, 1993-2023', fontsize=22)
+    axes[1].set_title(
+        f'{panel_letters[1]}) Trends in {title_word}, 1993-2023', fontsize=22
+    )
     axes[1].set_xticklabels(axes[1].get_xticklabels(), rotation=45, ha='right')
 
     # Adjust layout
     plt.tight_layout()
     
-    # Save figures
-    plt.savefig(os.path.join(savepath, f'trends_summary_heatmap_{metric_name.lower().replace(" ", "_")}.png'), dpi=300)
-    plt.savefig(os.path.join(savepath, f'trends_summary_heatmap_{metric_name.lower().replace(" ", "_")}.pdf'), dpi=300)
+    # Save figures (use long-path form on Windows so long OneDrive + repo paths can exceed 260 chars)
+    out_png = _win_long_path_file(
+        os.path.join(savepath, f'trends_summary_heatmap_{metric_name.lower().replace(" ", "_")}.png')
+    )
+    out_pdf = _win_long_path_file(
+        os.path.join(savepath, f'trends_summary_heatmap_{metric_name.lower().replace(" ", "_")}.pdf')
+    )
+    plt.savefig(out_png, dpi=300)
+    plt.savefig(out_pdf, dpi=300)
     plt.close()
 
 def plot_annual_flow_heatmaps(df_1973_annual, df_1973_seasonal, df_1993_annual, df_1993_seasonal, 
@@ -159,8 +196,14 @@ def plot_annual_flow_heatmaps(df_1973_annual, df_1973_seasonal, df_1993_annual, 
     plt.tight_layout()
     
     # Save figures
-    plt.savefig(os.path.join(savepath, f'trends_summary_heatmap_{metric_name.lower().replace(" ", "_")}.png'), dpi=300)
-    plt.savefig(os.path.join(savepath, f'trends_summary_heatmap_{metric_name.lower().replace(" ", "_")}.pdf'), dpi=300)
+    out_png = _win_long_path_file(
+        os.path.join(savepath, f'trends_summary_heatmap_{metric_name.lower().replace(" ", "_")}.png')
+    )
+    out_pdf = _win_long_path_file(
+        os.path.join(savepath, f'trends_summary_heatmap_{metric_name.lower().replace(" ", "_")}.pdf')
+    )
+    plt.savefig(out_png, dpi=300)
+    plt.savefig(out_pdf, dpi=300)
     plt.close()
 
 def main():

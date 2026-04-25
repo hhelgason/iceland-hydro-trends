@@ -18,7 +18,13 @@ import numpy as np
 from pathlib import Path
 import pickle
 from matplotlib.colors import LinearSegmentedColormap
-from config import OUTPUT_DIR, LAMAH_ICE_BASE_PATH, ICELAND_SHAPEFILE, GLACIER_SHAPEFILE
+from config import (
+    GLACIER_SHAPEFILE,
+    ICELAND_SHAPEFILE,
+    LAMAH_ICE_BASE_PATH,
+    MANUSCRIPT_FIGURES_PATH,
+    OUTPUT_DIR,
+)
 
 # Set global font to Arial
 plt.rcParams['font.family'] = 'Arial'
@@ -80,11 +86,12 @@ def main(
     """Create seasonal temperature and precipitation trend figures (one file per period).
 
     ``pickle_dir``, ``pkl_suffix``, and ``output_path`` match the annual met figure script.
+    Default ``output_path`` is ``MANUSCRIPT_FIGURES_PATH`` in ``config`` (same as the annual figure).
     """
     print("=== Creating Seasonal Meteorological Trends Figures (2 separate) ===\n")
 
     pickle_dir = pickle_dir or OUTPUT_DIR
-    output_path = output_path or (OUTPUT_DIR / "meteorological_trends_figures")
+    output_path = output_path or MANUSCRIPT_FIGURES_PATH
     output_path.mkdir(parents=True, exist_ok=True)
 
     print("Loading meteorological trend data...")
@@ -295,7 +302,7 @@ def _cli() -> None:
         "--output-dir",
         type=Path,
         default=None,
-        help="Figure output folder (default: OUTPUT_DIR/meteorological_trends_figures)",
+        help=f"Figure output folder (default: {MANUSCRIPT_FIGURES_PATH})",
     )
     ns = ap.parse_args()
     main(
