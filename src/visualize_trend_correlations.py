@@ -33,13 +33,15 @@ Author: Hordur Bragi
 Created: 2024
 """
 
-import pandas as pd
-import numpy as np
+import hashlib
+import os
+
+import geopandas as gpd
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import seaborn as sns
 from pathlib import Path
-import geopandas as gpd
-import os
 from config import (
     OUTPUT_DIR,
     PERIOD,
@@ -50,9 +52,9 @@ from config import (
 
 # --- CONFIG ---
 output_folder = OUTPUT_DIR / f'{PERIOD}/correlations'
-split_output_folder = output_folder / 'split_glac_and_non_glac_rivers'
-glac_output_folder = split_output_folder / 'correlations_glac_rivers'
-non_glac_output_folder = split_output_folder / 'correlations_non_glac_rivers'
+split_output_folder = output_folder / "split"
+glac_output_folder = split_output_folder / "glac"
+non_glac_output_folder = split_output_folder / "non_glac"
 
 # Create output directories
 output_folder.mkdir(parents=True, exist_ok=True)
@@ -100,6 +102,12 @@ def plot_figs(basemap, glaciers, ax, iceland_shapefile_color='gray', glaciers_co
     if glaciers is not None:
         glaciers.plot(ax=ax, color=glaciers_color, alpha=0.5)
 
+def _map_corr_stem(metric: str, var: str) -> str:
+    """Short stem for map saves (full metric+var paths exceed Windows MAX_PATH)."""
+    h = hashlib.md5(f"{metric}|{var}".encode(), usedforsecurity=False).hexdigest()[:24]
+    return f"map_corr_{h}"
+
+
 def plot_correlations_on_map(catchments, correlations, metric, output_folder, title_prefix=""):
     """
     Create spatial maps showing correlation values across Iceland for a specific metric.
@@ -117,6 +125,9 @@ def plot_correlations_on_map(catchments, correlations, metric, output_folder, ti
     title_prefix : str, optional
         Prefix to add to plot titles, by default ""
     """
+    output_folder = Path(output_folder)
+    output_folder.mkdir(parents=True, exist_ok=True)
+
     # Merge correlations with catchment geometries
     catchments_with_corr = catchments.copy()
     metric_correlations = correlations[correlations['metric'] == metric]
@@ -152,10 +163,10 @@ def plot_correlations_on_map(catchments, correlations, metric, output_folder, ti
         
         plt.title(f'{title_prefix}Correlation between {metric} and {var}')
         plt.axis('off')
-        
-        # Save plot
-        plt.savefig(output_folder / f'map_correlation_{metric}_{var}.png', dpi=300, bbox_inches='tight')
-        plt.savefig(output_folder / f'map_correlation_{metric}_{var}.pdf', dpi=300, bbox_inches='tight')
+
+        stem = _map_corr_stem(metric, var)
+        plt.savefig(output_folder / f'{stem}.png', dpi=300, bbox_inches='tight')
+        plt.savefig(output_folder / f'{stem}.pdf', dpi=300, bbox_inches='tight')
         plt.close()
 
 # Define trend_metrics
@@ -721,6 +732,10 @@ def create_correlation_plots(summary_file, output_folder, title_prefix=""):
     plt.savefig(output_folder / 'trend_correlation_heatmaps_combined.png', dpi=300, bbox_inches='tight')
     plt.savefig(output_folder / 'trend_correlation_heatmaps_combined.pdf', dpi=300, bbox_inches='tight')
     plt.close()
+
+    out = Path(output_folder)
+    for season in ['DJF', 'MAM', 'JJA', 'SON']:
+        (out / f'seasonal_{season}').mkdir(parents=True, exist_ok=True)
 
     # Create map plots for each metric
     for metric in annual_metrics:
