@@ -72,8 +72,8 @@ meteo_var_labels = {}
 
 # Define paths for both periods
 results_paths = {
-    '1973': OUTPUT_DIR / "merged_results_dict_1973-2023_june_2025.pkl",
-    '1993': OUTPUT_DIR / "merged_results_dict_1993-2023_june_2025.pkl"
+    "1973": OUTPUT_DIR / "merged_results_dict_1973-2023.pkl",
+    "1993": OUTPUT_DIR / "merged_results_dict_1993-2023.pkl",
 }
 
 # Load meteorological trends for each period
