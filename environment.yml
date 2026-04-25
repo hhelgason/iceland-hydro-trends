@@ -6,12 +6,17 @@ dependencies:
   - python=3.12
   - numpy
   - pandas
+  - pyarrow
   - geopandas
   - matplotlib
   - scipy
   - statsmodels
-  - pathlib
   - seaborn
+  # Notebooks (e.g. Figure 6 ERA5 rasters) and interactive use
+  - jupyter
+  - ipykernel
+  - xarray
   - pip
   - pip:
-    - pymannkendall  # This package is not available in conda, so we install it via pip 
+    - pymannkendall  # This package is not available in conda, so we install it via pip
+    - openpyxl  # pandas ExcelFile for climate indices workbook
