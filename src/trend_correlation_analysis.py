@@ -40,6 +40,7 @@ import seaborn as sns
 from scipy import stats
 from pathlib import Path
 import geopandas as gpd
+import hashlib
 import os
 from config import (
     OUTPUT_DIR,
@@ -50,9 +51,10 @@ from config import (
 # --- CONFIG ---
 results_file = OUTPUT_DIR / 'results_lamah_data' / f'results_{PERIOD}.csv'
 output_folder = OUTPUT_DIR / f'{PERIOD}/correlations'
-split_output_folder = output_folder / 'split_glac_and_non_glac_rivers'
-glac_output_folder = split_output_folder / 'correlations_glac_rivers'
-non_glac_output_folder = split_output_folder / 'correlations_non_glac_rivers'
+# Short path segments (Windows MAX_PATH): avoid deep names under long repo roots.
+split_output_folder = output_folder / "split"
+glac_output_folder = split_output_folder / "glac"
+non_glac_output_folder = split_output_folder / "non_glac"
 
 def create_all_directories():
     """
@@ -160,10 +162,12 @@ seasons = ['DJF', 'MAM', 'JJA', 'SON']
 start_year, end_year = PERIOD.split('_')
 meteo_var_labels = {}
 
-# Define paths for both periods
+# Meteorological merged-results pickles (annual + seasonal trends per basin).
+# Place updated ``merged_results_dict_<start>-<end>.pkl`` files here, or pass copies
+# from ``calculate_trends_in_meteorological_vars.py`` using the names below.
 results_paths = {
-    '1973': Path("merged_results_dict_1973-2023_june_2025.pkl"),
-    '1993': Path("merged_results_dict_1993-2023_june_2025.pkl")
+    "1973": OUTPUT_DIR / "merged_results_dict_1973-2023.pkl",
+    "1993": OUTPUT_DIR / "merged_results_dict_1993-2023.pkl",
 }
 
 # Load results for the current period
@@ -209,6 +213,16 @@ catchment_vars = [
 glacier_attributes = ['g_lat', 'g_lon', 'g_mean_el', 'g_min_el', 'g_slope', 'g_slopel20', 'glac_fra']
 
 # --- CORRELATION ANALYSIS ---
+def _scatter_stem(metric: str, var: str) -> str:
+    """
+    Short filename stem for scatter plots.
+
+    Full names like ``{metric}_vs_{var}.png`` can exceed Windows path limits under long repo roots.
+    """
+    h = hashlib.md5(f"{metric}|{var}".encode(), usedforsecurity=False).hexdigest()[:24]
+    return f"scatter_{h}"
+
+
 def run_correlation_analysis(results, catchments_chara, output_folder, river_type=None, g_frac_threshold=0.1):
     """
     Run correlation analysis between streamflow trends and catchment characteristics.
@@ -274,6 +288,10 @@ def run_correlation_analysis(results, catchments_chara, output_folder, river_typ
         
         metric_out = output_folder / metric_folder
         print(f"\nProcessing {metric} -> {metric_out}")
+        try:
+            os.makedirs(metric_out, exist_ok=True)
+        except Exception as e:
+            print(f"Error creating directory {metric_out}: {e}")
         
         metric_label = metric.replace('_', ' ').title()
         significant_results = []
@@ -352,7 +370,7 @@ def run_correlation_analysis(results, catchments_chara, output_folder, river_typ
                     plt.tight_layout()
                     
                     try:
-                        plot_path = metric_out / f"{metric}_vs_{var}.png"
+                        plot_path = metric_out / f"{_scatter_stem(metric, var)}.png"
                         plt.savefig(plot_path, dpi=200)
                         print(f"Saved plot to: {plot_path}")
                     except Exception as e:
@@ -420,7 +438,7 @@ def run_correlation_analysis(results, catchments_chara, output_folder, river_typ
                     plt.tight_layout()
                     
                     try:
-                        plot_path = metric_out / f"{metric}_vs_{var}.png"
+                        plot_path = metric_out / f"{_scatter_stem(metric, var)}.png"
                         plt.savefig(plot_path, dpi=200)
                         print(f"Saved plot to: {plot_path}")
                     except Exception as e:
