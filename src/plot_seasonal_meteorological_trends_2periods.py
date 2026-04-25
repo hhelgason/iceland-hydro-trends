@@ -10,6 +10,7 @@ Author: Hordur Bragi Helgason
 Date: 2025
 """
 
+import argparse
 import matplotlib.pyplot as plt
 import pandas as pd
 import geopandas as gpd
@@ -71,24 +72,33 @@ def plot_seasonal_grid(to_plot, bmap, glaciers, axes_grid, seasonal_colnames, se
         # Add title
         ax.set_title(title, y=0.9, fontsize=24)
 
-def main():
-    """Main function to create the seasonal meteorological trends figures."""
-    
+def main(
+    pickle_dir: Path | None = None,
+    pkl_suffix: str = "",
+    output_path: Path | None = None,
+):
+    """Create seasonal temperature and precipitation trend figures (one file per period).
+
+    ``pickle_dir``, ``pkl_suffix``, and ``output_path`` match the annual met figure script.
+    """
     print("=== Creating Seasonal Meteorological Trends Figures (2 separate) ===\n")
-    
-    # Output path
-    output_path = OUTPUT_DIR / 'meteorological_trends_figures'
+
+    pickle_dir = pickle_dir or OUTPUT_DIR
+    output_path = output_path or (OUTPUT_DIR / "meteorological_trends_figures")
     output_path.mkdir(parents=True, exist_ok=True)
-    
-    # Load pickle files
+
     print("Loading meteorological trend data...")
-    pkl_1973 = OUTPUT_DIR / 'merged_results_dict_1973-2023.pkl'
-    pkl_1993 = OUTPUT_DIR / 'merged_results_dict_1993-2023.pkl'
-    
-    with open(pkl_1973, 'rb') as f:
+    pkl_1973 = pickle_dir / f"merged_results_dict_1973-2023{pkl_suffix}.pkl"
+    pkl_1993 = pickle_dir / f"merged_results_dict_1993-2023{pkl_suffix}.pkl"
+    if not pkl_1973.is_file():
+        raise FileNotFoundError(f"Missing pickle: {pkl_1973}")
+    if not pkl_1993.is_file():
+        raise FileNotFoundError(f"Missing pickle: {pkl_1993}")
+
+    with open(pkl_1973, "rb") as f:
         merged_results_1973 = pickle.load(f)
-    
-    with open(pkl_1993, 'rb') as f:
+
+    with open(pkl_1993, "rb") as f:
         merged_results_1993 = pickle.load(f)
     
     print("Loaded both period datasets")
@@ -265,6 +275,36 @@ def main():
     
     print(f"\n=== All figures saved to: {output_path} ===")
 
+def _cli() -> None:
+    ap = argparse.ArgumentParser(
+        description="Plot seasonal met trends (temp + prec), one figure per period.",
+    )
+    ap.add_argument(
+        "--pickle-dir",
+        type=Path,
+        default=None,
+        help=f"Folder with merged_results_dict pickles (default: {OUTPUT_DIR})",
+    )
+    ap.add_argument(
+        "--pkl-suffix",
+        type=str,
+        default="",
+        help="Suffix before .pkl, e.g. _lamah_snowpickle",
+    )
+    ap.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="Figure output folder (default: OUTPUT_DIR/meteorological_trends_figures)",
+    )
+    ns = ap.parse_args()
+    main(
+        pickle_dir=ns.pickle_dir,
+        pkl_suffix=ns.pkl_suffix,
+        output_path=ns.output_dir,
+    )
+
+
 if __name__ == "__main__":
-    main()
+    _cli()
 
