@@ -18,6 +18,7 @@ plt.rcParams['font.family'] = 'Arial'
 
 # Define path to save plots
 save_path = MANUSCRIPT_FIGURES_PATH
+MANUSCRIPT_FIGURES_PATH.mkdir(parents=True, exist_ok=True)
 
 # Read the catchment characteristics - Extract area_calc and human influence
 catchments_chara = pd.read_csv(CATCHMENT_ATTRIBUTES_CSV, sep=';')
