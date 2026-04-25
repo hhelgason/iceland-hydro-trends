@@ -27,12 +27,14 @@ Unzip the file and make note of the path to the extracted data.
 
 ### 2. Create a Conda Environment
 
-Create the environment from `environment.yml` (see also `requirements.txt` if you use `pip`):
+Create the environment from `environment.yml` (conda packages plus `pip` extras such as `pymannkendall` and `openpyxl`):
 
 ```bash
 conda env create -f environment.yml
 conda activate iceland-hydro-trends
 ```
+
+To refresh after pulling updates: `conda env update -f environment.yml --prune`
 
 ---
 
@@ -40,11 +42,12 @@ conda activate iceland-hydro-trends
 
 Edit the `config.py` file in the `src/` directory to set:
 
-- The path to the extracted **LamaH-Ice dataset**
-- The output directory for results and figures
-- Specify `START_YEAR` and `END_YEAR`. If reproducing results from the paper, first run `main.py` (see below) with `START_YEAR = 1973`, then again with `START_YEAR = 1993` (in `config.py`).
+- The path to the extracted **LamaH-Ice dataset** (`LAMAH_ICE_BASE_PATH`)
+- The output directory for results and figures (`OUTPUT_DIR`; default is `paper_repro_output/` in the repo)
+- `START_YEAR` and `END_YEAR` for the period `main.py` and other scripts use. If reproducing results from the paper, run `main.py` **twice**: with `START_YEAR` = 1973 and with `START_YEAR` = 1993 (and `END_YEAR` = 2023), changing `config.py` between runs.
+- **Bundled basemaps:** `ICELAND_SHAPEFILE` and `GLACIER_SHAPEFILE` point to `island_isn93.shp` and `2019_glacier_outlines.shp` under the repo’s `data/` folder (include all sidecar files: `.shp`, `.shx`, `.dbf`, `.prj`, etc.).
 
-`OUTPUT_DIR` in `config` (by default `paper_repro_output/` inside the repo) is where most tables and model outputs go. Some figure scripts also write to `manuscript_figures/` under that same output root (`MANUSCRIPT_FIGURES_PATH`).
+`OUTPUT_DIR` is where most tables and model outputs go. Some figure scripts write to `manuscript_figures/` (`MANUSCRIPT_FIGURES_PATH` under the same output root).
 
 ---
 
@@ -56,21 +59,23 @@ Navigate to the `src/` directory:
 cd src
 ```
 
-**Figures 2 and 3** (Figure 1 is produced from a notebook in `notebooks/`)
+#### Streamflow data order (important)
+
+These steps must run in this order:
+
+1. **`pre_process_streamflow_measurements_from_LamaH_Ice.py`** — builds `paper_repro_output/cleaned_streamflow_data/cleaned_streamflow_data.csv` from LamaH daily discharge files.
+2. **`calculate_annual_and_seasonal_averages_for_longterm_analysis.py`** — reads that cleaned CSV, optionally merges `data/Jokulsa_a_dal_river_longterm_series.csv` for gauge 43, and writes long-term annual/seasonal average tables (used with the climate-index analysis). **Do not run this before pre-processing.**
+3. **`main.py`** — full streamflow trend analysis and maps; it also reads the cleaned CSV. For paper periods, **run it twice** with `START_YEAR` = 1973 and then 1993 in `config.py` (and matching `END_YEAR`).
+
+#### Figures 2 and 3 (Figure 1 is from a notebook in `notebooks/`)
+
+Use the long-term averages from step 2 where needed for indices. Typical order:
 
 | Script | Description |
 |--------|-------------|
-| `calculate_annual_and_seasonal_averages_for_longterm_analysis.py` | Long-term streamflow means (inputs for the climate–indices work) |
 | `plot_Figure2_raster_anomalies.py` | Figure 2 |
 | `calculate_climate_indices_correlation_with_streamflow.py` | Prepares data for Figure 3 |
 | `plot_climate_indices_correlation_analysis_AO_NAO.py` | Figure 3 |
-
-**Streamflow trend analysis (core pipeline)**
-
-| Script | Description |
-|--------|-------------|
-| `pre_process_streamflow_measurements_from_LamaH_Ice.py` | Pre-processes daily streamflow to cleaned CSV, etc. |
-| `main.py` | Trend analysis: annual/seasonal streamflow, CV, flashiness, baseflow, etc. **Run twice**: `START_YEAR` = 1973 and 1993 in `config.py` |
 
 **Meteorological trends (outputs used by Figure 4, Figure 5, and met heatmap summaries)**  
 First compute merged result pickles from LamaH-Ice daily met CSVs and the per-basin snowfall data under `data/` (see `config` / `data/.gitignore`). Then run the figure scripts (defaults read those pickles from `OUTPUT_DIR`).
@@ -99,7 +104,7 @@ First compute merged result pickles from LamaH-Ice daily met CSVs and the per-ba
 
 ## Notebooks
 
-The `notebooks/` folder contains Jupyter notebooks used to generate the rest of the figures for the manuscript. These are primarily for visualization and post-processing. Core computations are handled in the scripts listed above.
+The `notebooks/` folder contains Jupyter notebooks used to generate the rest of the figures for the manuscript. These are primarily for visualization and post-processing. Core computations are handled in the scripts listed above. The conda environment includes `jupyter`, `ipykernel`, and `xarray` for those notebooks.
 
 ---
 
