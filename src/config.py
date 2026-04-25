@@ -1,14 +1,19 @@
 """Configuration settings for the streamflow data processing."""
 
+import gzip
+import pickle
 from pathlib import Path
+
+# Repository folder (contains ``src/``). Outputs default to ``paper_repro_output`` inside it.
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+_DATA_DIR = _REPO_ROOT / "data"
 
 # Base path to the LamaH-Ice dataset
 # Users should modify this path to point to their local copy of the dataset
-LAMAH_ICE_BASE_PATH = Path(r"C:\Users\hordurbhe\OneDrive - Landsvirkjun\Documents\Vinna\lamah\lamah_ice\lamah_ice")
+LAMAH_ICE_BASE_PATH = Path(r"")
 
-# Output directory for processed data
-# By default, saves in a 'data' subdirectory of the project
-OUTPUT_DIR = Path(r"C:\Users\hordurbhe\Not_backed_up\Changes in streamflow in Iceland paper\final_testing_march26")
+# Output directory for processed data and figures (edit if you want results elsewhere)
+OUTPUT_DIR = _REPO_ROOT / "paper_repro_output"
 
 # Path to the cleaned streamflow data
 STREAMFLOW_DATA_PATH = OUTPUT_DIR / "cleaned_streamflow_data" / "cleaned_streamflow_data.csv"
@@ -31,12 +36,15 @@ CATCHMENT_ATTRIBUTES_CSV = LAMAH_ICE_BASE_PATH / "A_basins_total_upstrm/1_attrib
 # Path to gauges shapefile (used for gauge names and locations)
 GAUGES_SHAPEFILE = LAMAH_ICE_BASE_PATH / "D_gauges/3_shapefiles/gauges.shp"
 
-# Paths to Iceland shapefile and glacier outlines
-ICELAND_SHAPEFILE = Path(r'C:\Users\hordurbhe\OneDrive - Landsvirkjun\Documents\Vinna\lamah\lamah_ice\stanford-xz811fy7881-shapefile\island_isn93.shp')
-GLACIER_SHAPEFILE = Path(r'C:\Users\hordurbhe\OneDrive - Landsvirkjun\Documents\Vinna\lamah\lamah_ice\glacier_outline_1890_2019_hh_Aug2021\jökla-útlínur\2019_glacier_outlines.shp')
+# Paths to Iceland shapefile and glacier outlines (bundled under ``data/`` in this repo)
+ICELAND_SHAPEFILE = _DATA_DIR / "island_isn93.shp"
+GLACIER_SHAPEFILE = _DATA_DIR / "2019_glacier_outlines.shp"
+
+# Alias for scripts that import ``GLACIER_OUTLINES``
+GLACIER_OUTLINES = GLACIER_SHAPEFILE
 
 # Path to save manuscript figures
-MANUSCRIPT_FIGURES_PATH = Path(r"C:\Users\hordurbhe\OneDrive - Landsvirkjun\Changes in streamflow in Iceland\paper\HESS peer review process\Revised manuscript\Figures_testMarch26")
+MANUSCRIPT_FIGURES_PATH = OUTPUT_DIR / "manuscript_figures"
 
 # List of gauges to keep despite strong human influence
 # These gauges are kept for annual trend analysis because upstream reservoirs
@@ -54,4 +62,34 @@ GAUGES_TO_REMOVE = [
     13,  # Elliðaár
     78,   # Smyrlabjargaá
     96   # Álftafitjakvísl
-] 
+]
+
+# --- Caravan / LamaH per-basin daily DataFrames: ``lamahice_<id>`` -> DataFrame
+# Prefer uncompressed ``daily_dfs_snowfall_runoff.p`` (local; may include ``snowmelt_sum``) if present;
+# else ``daily_dfs_snowfall_runoff.p.gz`` (smaller, ``snowfall_sum`` only) for the repo.
+SNOWFALL_RUNOFF_PICKLE_P = _DATA_DIR / "daily_dfs_snowfall_runoff.p"
+SNOWFALL_RUNOFF_PICKLE_P_GZ = _DATA_DIR / "daily_dfs_snowfall_runoff.p.gz"
+
+
+def resolve_snowfall_runoff_pickle_path() -> Path:
+    """Uncompressed pickle if present, otherwise gzip (Git-friendly) copy."""
+    if SNOWFALL_RUNOFF_PICKLE_P.is_file():
+        return SNOWFALL_RUNOFF_PICKLE_P
+    if SNOWFALL_RUNOFF_PICKLE_P_GZ.is_file():
+        return SNOWFALL_RUNOFF_PICKLE_P_GZ
+    raise FileNotFoundError(
+        f"Need either {SNOWFALL_RUNOFF_PICKLE_P} or {SNOWFALL_RUNOFF_PICKLE_P_GZ} under data/"
+    )
+
+
+def load_snowfall_runoff_pickle(path: Path | None = None) -> dict:
+    """Load dict of per-basin DataFrames. Supports plain ``.p`` and gzip ``.p.gz``."""
+    path = path or resolve_snowfall_runoff_pickle_path()
+    path = Path(path)
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    if path.suffix == ".gz" or path.name.endswith(".p.gz"):
+        with gzip.open(path, "rb") as f:
+            return pickle.load(f)
+    with open(path, "rb") as f:
+        return pickle.load(f)
