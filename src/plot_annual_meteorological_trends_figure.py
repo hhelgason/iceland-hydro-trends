@@ -10,6 +10,7 @@ Author: Hordur Bragi Helgason
 Date: 2025
 """
 
+import argparse
 import matplotlib.pyplot as plt
 import pandas as pd
 import geopandas as gpd
@@ -80,24 +81,44 @@ def load_prec_data_for_et_calc():
     print(f"  Loaded precipitation data for {len(combined_df.columns)} catchments")
     return combined_df
 
-def main():
-    """Main function to create the meteorological trends figure."""
-    
+def main(
+    pickle_dir: Path | None = None,
+    pkl_suffix: str = "",
+    output_path: Path | None = None,
+    suptitle: str = "Annual trends in meteorological variables from ERA5-Land",
+):
+    """Create the meteorological trends figure.
+
+    Parameters
+    ----------
+    pickle_dir
+        Directory containing ``merged_results_dict_1973-2023{pkl_suffix}.pkl`` and
+        ``merged_results_dict_1993-2023{pkl_suffix}.pkl``. Defaults to ``OUTPUT_DIR``.
+    pkl_suffix
+        Suffix before ``.pkl`` (e.g. ``_lamah_snowpickle``).
+    output_path
+        Folder for PNG/PDF output. Defaults to ``OUTPUT_DIR / "meteorological_trends_figures"``.
+    suptitle
+        Figure suptitle (original manuscript wording references ERA5-Land).
+    """
     print("=== Creating Annual Meteorological Trends Figure ===\n")
-    
-    # Define output path
-    output_path = OUTPUT_DIR / 'meteorological_trends_figures'
+
+    pickle_dir = pickle_dir or OUTPUT_DIR
+    output_path = output_path or (OUTPUT_DIR / "meteorological_trends_figures")
     output_path.mkdir(parents=True, exist_ok=True)
-    
-    # Load pickle files
+
     print("Loading meteorological trend data...")
-    pkl_1973 = OUTPUT_DIR / 'merged_results_dict_1973-2023.pkl'
-    pkl_1993 = OUTPUT_DIR / 'merged_results_dict_1993-2023.pkl'
-    
-    with open(pkl_1973, 'rb') as f:
+    pkl_1973 = pickle_dir / f"merged_results_dict_1973-2023{pkl_suffix}.pkl"
+    pkl_1993 = pickle_dir / f"merged_results_dict_1993-2023{pkl_suffix}.pkl"
+    if not pkl_1973.is_file():
+        raise FileNotFoundError(f"Missing pickle: {pkl_1973}")
+    if not pkl_1993.is_file():
+        raise FileNotFoundError(f"Missing pickle: {pkl_1993}")
+
+    with open(pkl_1973, "rb") as f:
         merged_results_1973 = pickle.load(f)
-    
-    with open(pkl_1993, 'rb') as f:
+
+    with open(pkl_1993, "rb") as f:
         merged_results_1993 = pickle.load(f)
     
     print("Loaded both period datasets")
@@ -336,9 +357,7 @@ def main():
     axes[1, 0].text(-0.15, 0.5, 'Period 2: 1993-2023', transform=axes[1, 0].transAxes,
                     fontsize=20, fontweight='bold', va='center', ha='center', rotation=90)
     
-    # Add main title
-    fig.suptitle('Annual trends in meteorological variables from ERA5-Land',
-                 fontsize=24, fontweight='bold', y=0.98)
+    fig.suptitle(suptitle, fontsize=24, fontweight="bold", y=0.98)
     
     # Save figure
     output_file = output_path / 'annual_meteorological_trends_2x5.png'
@@ -352,6 +371,43 @@ def main():
     
     plt.close()
 
+def _cli() -> None:
+    ap = argparse.ArgumentParser(
+        description="Plot 2x5 annual meteorological trend maps (two periods).",
+    )
+    ap.add_argument(
+        "--pickle-dir",
+        type=Path,
+        default=None,
+        help=f"Folder with merged_results_dict pickles (default: {OUTPUT_DIR})",
+    )
+    ap.add_argument(
+        "--pkl-suffix",
+        type=str,
+        default="",
+        help="Suffix before .pkl, e.g. _lamah_snowpickle",
+    )
+    ap.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="Figure output folder (default: OUTPUT_DIR/meteorological_trends_figures)",
+    )
+    ap.add_argument(
+        "--suptitle",
+        type=str,
+        default="Annual trends in meteorological variables from ERA5-Land",
+        help="Figure title",
+    )
+    ns = ap.parse_args()
+    main(
+        pickle_dir=ns.pickle_dir,
+        pkl_suffix=ns.pkl_suffix,
+        output_path=ns.output_dir,
+        suptitle=ns.suptitle,
+    )
+
+
 if __name__ == "__main__":
-    main()
+    _cli()
 
